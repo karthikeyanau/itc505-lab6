@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ITC 505 • Lab 6 • Karthikeya — Morse Code Studio</title>
+  <meta name="description" content="Holy Grail layout + Morse Code encoder/decoder with audio playback by Karthikeya" />
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --acc:#38bdf8;
+      --ink:#0b1220; --br:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial}
+    .layout{
+      display:grid;gap:16px;padding:16px;min-height:100vh;
+      grid-template-areas:"header header header" "sidebar content ad" "footer footer footer";
+      grid-template-columns:220px 1fr 280px;grid-template-rows:auto 1fr auto;
+    }
+    .header,.sidebar,.content,.ad,.footer{background:var(--panel);border:1px solid var(--br);border-radius:16px}
+    .header{grid-area:header;padding:20px}.byline{color:var(--muted);margin-top:-8px}
+    .sidebar{grid-area:sidebar;padding:16px}
+    .menu h2{margin:0 0 12px;font-size:1.1rem}
+    .menu ul{list-style:none;margin:0;padding:0}
+    .menu li{margin:8px 0}
+    .menu a{color:var(--text);text-decoration:none;padding:6px 10px;border-radius:8px;display:inline-block}
+    .menu a.active,.menu a:hover{background:var(--ink);outline:1px solid #1e293b}
+    .menu a.active{border-left:4px solid var(--acc);padding-left:6px}
+    .content{grid-area:content;padding:20px}
+    .tool h2{margin-top:0}
+    .label{display:block;margin:.25rem 0 .25rem .125rem;color:var(--muted);font-size:.9rem}
+    textarea,input{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--br);
+      background:var(--ink);color:var(--text)
+    }
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+    button{border:none;padding:10px 14px;border-radius:12px;background:var(--acc);color:#00111a;font-weight:700;cursor:pointer}
+    button:hover{filter:brightness(1.08)}
+    .panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    .panel{background:var(--ink);border:1px solid var(--br);border-radius:14px;padding:12px}
+    .status{color:var(--muted)}.status.ok{color:#22c55e}.status.warn{color:#f59e0b}
+    .ref{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;
+      font-family:ui-monospace,Menlo,Consolas,"Liberation Mono",monospace}
+    .ref div{background:#0e1524;border:1px solid var(--br);border-radius:8px;padding:6px 8px}
+    .ad{grid-area:ad;padding:16px;display:grid;place-items:center}
+    .ad img{width:100%;height:auto;border-radius:12px;border:1px solid var(--br)}
+    .footer{grid-area:footer;padding:20px;color:var(--muted)}.footer h2{margin-top:0;color:var(--text)}
+    @media(max-width:960px){
+      .layout{grid-template-areas:"header" "sidebar" "content" "ad" "footer";grid-template-columns:1fr}
+      .panels{grid-template-columns:1fr}
+      .ref{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Header -->
+    <header class="header">
+      <h1>Lab 6 — Holy Grail Layout</h1>
+      <p class="byline">Morse Code Studio • by Karthikeya</p>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="menu">
+        <h2>Navigation</h2>
+        <ul>
+          <li><a href="/index.html">🏠 Home</a></li>
+          <li><a href="/itc505/labs.html">🧪 Labs Overview</a></li>
+          <li><a href="/itc505/projects.html">💻 Projects</a></li>
+          <li><a href="/itc505/resources.html">📚 Resources</a></li>
+          <li><a href="/itc505/contact.html">📩 Contact</a></li>
+          <li><a class="active" href="/itc505/lab-6/">⚙️ Lab 6: Morse Studio</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <section class="tool">
+        <h2>Morse Code Studio</h2>
+        <p>Encode/Decode Morse and play audio beeps. All in one page by Karthikeya.</p>
+
+        <form id="morseForm">
+          <label class="label" for="plain">Plain Text</label>
+          <textarea id="plain" rows="4" placeholder="Type your message here…"></textarea>
+
+          <div class="actions">
+            <button type="button" id="btnEncode">Encode →</button>
+            <button type="button" id="btnDecode">← Decode</button>
+            <button type="button" id="btnClear">Clear</button>
+          </div>
+
+          <label class="label" for="morse">Morse Code</label>
+          <textarea id="morse" rows="4" placeholder="Use . for dits, - for dahs, spaces between letters, / between words."></textarea>
+
+          <div class="grid2">
+            <div>
+              <label class="label" for="wpm">Speed (WPM)</label>
+              <input id="wpm" type="number" min="5" max="40" step="1" value="18" />
+            </div>
+            <div>
+              <label class="label" for="pitch">Pitch (Hz)</label>
+              <input id="pitch" type="number" min="200" max="1000" step="10" value="550" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" id="btnPlay">Play Morse</button>
+            <button type="button" id="btnStop">Stop</button>
+          </div>
+        </form>
+
+        <div class="panels">
+          <div class="panel">
+            <h3>Status</h3>
+            <div id="status" class="status">Ready.</div>
+          </div>
+          <div class="panel">
+            <h3>Quick Reference</h3>
+            <div class="ref" id="refTable"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Advertisement -->
+    <aside class="ad">
+      <a href="https://www.amazon.com/Nike-Modern-White-industrial-neutral/dp/B0CZDKQ2J2/ref=sr_1_6?crid=1UTAMTULWJ9MD&dib=eyJ2IjoiMSJ9.OCfoCNBbEWlR6XU08kW-pSxSS8fg84p8lZaCUeecs__5XtVsorUZ0L5gqVn2slpxVMPopKqqFP6Vnqu1wjQGQs3B9QdGzqmd88wtcMx0iB4GdiCZo9Jk4eMSjci1oIZ3nYDbjluepAwpJUg5mDAoo1cz0LC8lQib0v2RrdFlm-El5dXbMMP1JD35qIvSL3cKNdk1gKK4sk-Xnc8oker4yuIgPLVt7KEYDh-8i09sAIqODnnQfav_RmjEBb5yuaopLiuw1piDtFiwVIpmpjyhTSv6bb2WfYG_Z__C6QJcTVs.6t_EFP7lz5_zfsjOz3PG2mnC8zCzsklox_X5m7vblWQ&dib_tag=se&keywords=nike%2Bjordans%2Bfor%2Bmen&qid=1761626497&sprefix=nike%2Bjordon%2Caps%2C157&sr=8-6&th=1&psc=1" target="_blank" rel="noopener noreferrer">
+        <img src="jordan.jpg" alt="jordan shoes — click to view on Amazon" />
+      </a>
+    </aside>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <h2>Addendum</h2>
+      <p><strong>Problem solved:</strong> Convert text↔morse and play audible signals to visualize encoding.</p>
+      <p><strong>How it works:</strong> Character map drives encode/decode; Web Audio API beeps are timed from WPM.</p>
+      <p><strong>Difficulties & fixes:</strong> Timing and input validation handled with async/await and regex. Path issues fixed using relative <code>images/ad.jpg</code>.</p>
+      <p>Last updated: <span id="lastModified"></span></p>
+    </footer>
+  </div>
+
+  <script>
+    // Last Modified Snippet
+    document.getElementById('lastModified').textContent = document.lastModified;
+
+    // JS Logic
+    const $ = id => document.getElementById(id);
+    const plain = $('plain'), morse = $('morse'), status = $('status'),
+          btnE = $('btnEncode'), btnD = $('btnDecode'), btnC = $('btnClear'),
+          btnP = $('btnPlay'), btnS = $('btnStop'),
+          wpm = $('wpm'), pitch = $('pitch'), ref = $('refTable');
+    let ctx = null, stopFlag = false;
+
+    const MAP = {
+      A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",
+      M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..",
+      0:"-----",1:".----",2:"..---",3:"...--",4:"....-",5:".....",6:"-....",7:"--...",8:"---..",9:"----."
+    };
+    const REV = {}; for(const k in MAP) REV[MAP[k]]=k;
+    Object.keys(MAP).forEach(k=>{
+      const d=document.createElement('div');
+      d.textContent=`${k}  ${MAP[k]}`; ref.appendChild(d);
+    });
+
+    function setMsg(m,c=''){status.textContent=m;status.className='status';if(c)status.classList.add(c);}
+    function encode(t){return t.toUpperCase().split(/\s+/).map(w=>[...w].map(ch=>MAP[ch]||'').filter(Boolean).join(' ')).join(' / ');}
+    function decode(c){return c.trim().split('/').map(w=>w.trim().split(/\s+/).map(s=>REV[s]||'').join('')).join(' ');}
+    function ditMs(w){const n=parseInt(w)||18;return 1200/n;}
+    const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+    async function tone(ms,f){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.frequency.value=f;g.gain.value=0.2;o.connect(g).connect(ctx.destination);
+      o.start();await sleep(ms);o.stop();}
+    async function playSeq(seq,w,f){stopFlag=false;const dit=ditMs(w),dah=3*dit;
+      for(const ch of seq){if(stopFlag)return;
+        if(ch=='.'){await tone(dit,f);await sleep(dit);}
+        else if(ch=='-'){await tone(dah,f);await sleep(dit);}
+        else if(ch==' '){await sleep(3*dit);}
+        else if(ch=='/'){await sleep(7*dit);}
+      }
+    }
+    btnE.onclick=()=>{morse.value=encode(plain.value);setMsg(morse.value?'Encoded.':'Nothing to encode.',morse.value?'ok':'');};
+    btnD.onclick=()=>{plain.value=decode(morse.value);setMsg(plain.value?'Decoded.':'Nothing to decode.',plain.value?'ok':'');};
+    btnC.onclick=()=>{plain.value='';morse.value='';setMsg('Cleared.');};
+    btnP.onclick=async()=>{if(!morse.value.trim())return setMsg('Enter Morse to play.','warn');
+      setMsg('Playing…');await playSeq(morse.value, wpm.value, pitch.value);if(!stopFlag)setMsg('Done.','ok');};
+    btnS.onclick=()=>{stopFlag=true;try{ctx&&ctx.suspend();}catch{}setMsg('Stopped.');};
+    [plain,morse].forEach(e=>e.addEventListener('input',()=>setMsg('Ready.')));
+  </script>
+</body>
+</html>
